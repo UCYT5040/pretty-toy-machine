@@ -1,11 +1,43 @@
-import kaplay from "kaplay";
-// import "kaplay/global"; // uncomment if you want to use without the k. prefix
+import { drag } from "./components/drag";
+import { physics } from "./components/physics";
+import { planet } from "./components/planet";
+import { k } from "./kaplayCtx";
+import { loadNotoEmoji } from "./loadNotoEmoji";
 
-const k = kaplay();
+loadNotoEmoji("soccer", "⚽");
+loadNotoEmoji("earth", "🌍");
+loadNotoEmoji("rocket", "🚀");
 
-k.loadRoot("./"); // A good idea for Itch.io publishing later
-k.loadSprite("bean", "sprites/bean.png");
+k.setGravity(1200);
 
-k.add([k.pos(120, 80), k.sprite("bean")]);
+k.add([
+  k.sprite("earth"),
+  k.anchor("center"),
+  k.area(),
+  k.pos(100, 100),
+  drag(),
+  planet(),
+  physics(k.vec2(0, 0), 1000),
+  "solid",
+]);
 
-k.onClick(() => k.addKaboom(k.mousePos()));
+k.add([
+  k.sprite("soccer"),
+  k.anchor("center"),
+  k.area(),
+  k.pos(500, 100),
+  drag(),
+  physics(),
+  k.scale(0.5, 0.5),
+  "solid",
+]);
+
+/* Floor */
+k.add([
+  k.area(),
+  k.rect(k.width(), 40),
+  k.pos(0, k.height() - 40),
+  k.area(),
+  k.color(80, 80, 80),
+  "solid",
+]);
