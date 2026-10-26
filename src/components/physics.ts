@@ -14,8 +14,15 @@ type PhysicsObj = GameObj<PhysicsObjComps>;
 type PhysicsObjWithDrag = GameObj<PhysicsObjComps & DragComp>;
 
 const G = 1000000;
+const FLICK_TIME_WINDOW = 0.08;
+const MIN_FLICK_SPEED = 200;
+const FLICK_SCALE = 0.75;
+const MAX_FLICK_SPEED = 2200;
 
 export function physics(initialVel = k.vec2(0, 0), mass = 1): PhysicsComp {
+  let wasDragging = false;
+  let dragHistory: { pos: Vec2; time: number }[] = [];
+
   return {
     id: "physics",
     require: ["pos"],
@@ -25,9 +32,41 @@ export function physics(initialVel = k.vec2(0, 0), mass = 1): PhysicsComp {
     restitution: 0.8,
     add(this: PhysicsObj) {
       this.onUpdate(() => {
-        if ("isDragging" in this && (this as PhysicsObjWithDrag).isDragging) {
+        const isDragging =
+          "isDragging" in this && (this as PhysicsObjWithDrag).isDragging;
+
+        if (isDragging) {
+          const now = k.time();
+          dragHistory.push({ pos: this.pos.clone(), time: now });
+          while (
+            dragHistory.length > 2 &&
+            now - dragHistory[0].time > FLICK_TIME_WINDOW
+          ) {
+            dragHistory.shift();
+          }
+          wasDragging = true;
           this.vel = k.vec2(0, 0);
           return;
+        }
+
+        if (wasDragging) {
+          wasDragging = false;
+          if (dragHistory.length >= 2) {
+            const first = dragHistory[0];
+            const last = dragHistory[dragHistory.length - 1];
+            const dtDrag = last.time - first.time;
+            if (dtDrag > 0) {
+              const rawVel = last.pos.sub(first.pos).scale(1 / dtDrag);
+              if (rawVel.len() >= MIN_FLICK_SPEED) {
+                const scaledVel = rawVel.scale(FLICK_SCALE);
+                this.vel =
+                  scaledVel.len() > MAX_FLICK_SPEED
+                    ? scaledVel.unit().scale(MAX_FLICK_SPEED)
+                    : scaledVel;
+              }
+            }
+          }
+          dragHistory = [];
         }
 
         if (this.isStatic) return;
