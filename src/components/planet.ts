@@ -16,6 +16,7 @@ export function planet(): PlanetComp {
     isActive: true,
     radius: 400,
     add(this: PlanetObj) {
+      this.tag("planet");
       this.isStatic = this.isActive;
 
       this.onDraw(() => {

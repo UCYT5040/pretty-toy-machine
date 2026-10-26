@@ -73,7 +73,7 @@ export function physics(initialVel = k.vec2(0, 0), mass = 1): PhysicsComp {
 
         const dt = k.dt();
 
-        const planets = k.query({ include: "planet" });
+        const planets = k.query({ include: "planet" }); // consider using k.get ?
 
         let useRegularGravity = true;
         let acceleration = k.vec2(0, 0);
